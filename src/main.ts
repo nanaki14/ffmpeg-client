@@ -1,5 +1,9 @@
 import { app, BrowserWindow } from 'electron';
-import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const createWindow = (): void => {
   const mainWindow = new BrowserWindow({
@@ -8,7 +12,7 @@ const createWindow = (): void => {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: join(__dirname, 'preload.js'),
     },
   });
 
@@ -16,7 +20,7 @@ const createWindow = (): void => {
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+    mainWindow.loadFile(join(__dirname, 'index.html'));
   }
 };
 
