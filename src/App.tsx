@@ -1,7 +1,7 @@
 import './App.css';
 import { useState } from 'react';
 import { FileSelector } from '@/components/file-selector';
-import { ConversionSettings } from '@/components/settings';
+import { ConversionSettingsWithPresets } from '@/components/settings';
 import { ToastContainer } from '@/components/common';
 import { useToast } from '@/hooks/useToast';
 import { FileInfo, ConversionSettingsForm } from '@/types';
@@ -68,7 +68,7 @@ function App() {
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
                 変換設定
               </h2>
-              <ConversionSettings
+              <ConversionSettingsWithPresets
                 onSubmit={handleConversionSubmit}
                 disabled={isConverting}
               />
