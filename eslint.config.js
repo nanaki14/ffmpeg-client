@@ -32,6 +32,12 @@ export default [
         global: 'readonly',
         window: 'readonly',
         document: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        File: 'readonly',
+        vi: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
       },
     },
     plugins: {
