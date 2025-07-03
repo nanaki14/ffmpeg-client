@@ -94,3 +94,6 @@ export const SUPPORTED_EXTENSIONS = [
 ] as const;
 
 export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+// Re-export API types
+export * from './api';

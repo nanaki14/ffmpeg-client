@@ -7,3 +7,4 @@ export { Select } from './Select';
 export { Toast, ToastContainer } from './Toast';
 export { RadioGroup } from './RadioGroup';
 export { OptionCard, OptionCardGroup } from './OptionCard';
+export { ProgressBar } from './ProgressBar';
