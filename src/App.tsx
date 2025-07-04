@@ -4,11 +4,14 @@ import { Settings } from 'lucide-react';
 import { MultiFileSelector } from '@/components/file-selector';
 import { ConversionSettingsV2 } from '@/components/settings';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
-  BatchProgress,
-  BatchResult,
-} from '@/components/conversion';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { BatchProgress, BatchResult } from '@/components/conversion';
 import { Toaster } from '@/components/ui/sonner';
 import { useToast } from '@/hooks/useToast';
 import { conversionApi } from '@/services/conversionApi';
@@ -35,7 +38,6 @@ function App() {
   });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { success, error } = useToast();
-
 
   const handleFilesSelect = (files: FileInfo[]) => {
     setSelectedFiles(files);
@@ -64,17 +66,17 @@ function App() {
   const getSettingsDisplayText = () => {
     const qualityLabels = {
       maximum_compression: '最高圧縮',
-      compressed: '高圧縮', 
+      compressed: '高圧縮',
       standard: '標準',
       high: '高品質',
-      highest: '最高品質'
+      highest: '最高品質',
     };
     const resizeLabels = {
       original: '元サイズ',
       '1/2': '1/2',
-      '1/3': '1/3', 
+      '1/3': '1/3',
       '1/4': '1/4',
-      '1/8': '1/8'
+      '1/8': '1/8',
     };
     const formatLabels = {
       auto: '元の形式',
@@ -83,9 +85,9 @@ function App() {
       webp: 'WebP',
       avif: 'AVIF',
       gif: 'GIF',
-      heic: 'HEIC'
+      heic: 'HEIC',
     };
-    
+
     return `${qualityLabels[globalSettings.quality as keyof typeof qualityLabels]} / ${resizeLabels[globalSettings.resize as keyof typeof resizeLabels]} / ${formatLabels[globalSettings.format as keyof typeof formatLabels]}`;
   };
 
@@ -134,7 +136,6 @@ function App() {
     conversionApi.cancelFile(fileId);
   };
 
-
   const handleDownloadAll = () => {
     const successfulResults = batchResults.filter((r) => r.success);
     success(
@@ -168,7 +169,11 @@ function App() {
           </div>
           <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
                 <Settings className="h-4 w-4" />
                 設定
               </Button>
@@ -185,10 +190,12 @@ function App() {
             </DialogContent>
           </Dialog>
         </div>
-        
+
         <div className="text-center mb-6 p-3 bg-gray-50 rounded-lg">
           <p className="text-sm text-gray-600 mb-1">現在の設定</p>
-          <p className="font-medium text-gray-800">{getSettingsDisplayText()}</p>
+          <p className="font-medium text-gray-800">
+            {getSettingsDisplayText()}
+          </p>
         </div>
 
         <div className="space-y-8">

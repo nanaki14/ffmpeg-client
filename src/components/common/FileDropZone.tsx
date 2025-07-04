@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 
 interface FileDropZoneProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect?: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   accept?: string;
   maxSize?: number;
   children?: React.ReactNode;
@@ -10,6 +11,7 @@ interface FileDropZoneProps {
 
 export const FileDropZone: React.FC<FileDropZoneProps> = ({
   onFileSelect,
+  onFilesSelect,
   accept: _accept,
   maxSize: _maxSize,
   children,
@@ -34,10 +36,14 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
 
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
-        onFileSelect(files[0]);
+        if (onFilesSelect) {
+          onFilesSelect(files);
+        } else if (onFileSelect) {
+          onFileSelect(files[0]);
+        }
       }
     },
-    [onFileSelect]
+    [onFileSelect, onFilesSelect]
   );
 
   return (

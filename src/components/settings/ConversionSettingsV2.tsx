@@ -1,21 +1,23 @@
 import React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+
 import {
-  Settings,
-  Zap,
-  Image,
-  Maximize2,
-  FileImage,
-  Smartphone,
-  Monitor,
-  Tablet,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { OptionCardGroup } from '@/components/common';
-import { Form, FormItem, FormLabel, FormMessage, FormField, FormControl } from '@/components/ui/form';
+  Form,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormField,
+  FormControl,
+} from '@/components/ui/form';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   ConversionSettingsForm,
   ConversionSettingsFormSchema,
@@ -45,15 +47,15 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors: _errors, isSubmitting: _isSubmitting },
   } = form;
 
   const qualityOptions = [
     'maximum_compression',
-    'compressed', 
+    'compressed',
     'standard',
     'high',
-    'highest'
+    'highest',
   ];
 
   const qualityLabels = {
@@ -61,7 +63,7 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
     compressed: '高圧縮',
     standard: '標準',
     high: '高品質',
-    highest: '最高品質'
+    highest: '最高品質',
   };
 
   const qualityDescriptions = {
@@ -69,7 +71,7 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
     compressed: 'バランス重視（品質: 65%）',
     standard: '一般的な用途（品質: 75%）',
     high: '高画質重視（品質: 85%）',
-    highest: '最高画質（品質: 95%）'
+    highest: '最高画質（品質: 95%）',
   };
 
   const getQualitySliderValue = (quality: string) => {
@@ -119,7 +121,7 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, onSubmit]);
+  }, [form, onSubmit]);
 
   return (
     <Form {...form}>
@@ -137,7 +139,9 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
                     <div className="px-3">
                       <Slider
                         value={[getQualitySliderValue(field.value)]}
-                        onValueChange={(value) => field.onChange(getQualityFromSliderValue(value[0]))}
+                        onValueChange={(value) =>
+                          field.onChange(getQualityFromSliderValue(value[0]))
+                        }
                         max={4}
                         min={0}
                         step={1}
@@ -154,10 +158,18 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
                     </div>
                     <div className="text-center p-3 bg-gray-50 rounded-lg">
                       <div className="font-medium text-gray-900">
-                        {qualityLabels[field.value as keyof typeof qualityLabels]}
+                        {
+                          qualityLabels[
+                            field.value as keyof typeof qualityLabels
+                          ]
+                        }
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        {qualityDescriptions[field.value as keyof typeof qualityDescriptions]}
+                        {
+                          qualityDescriptions[
+                            field.value as keyof typeof qualityDescriptions
+                          ]
+                        }
                       </div>
                     </div>
                   </div>
@@ -167,62 +179,67 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
             />
           </div>
 
-          <div className='grid grid-cols-2 gap-4'>
-
+          <div className="grid grid-cols-2 gap-4">
             {/* リサイズ設定 */}
-              <FormField
-                control={control}
-                name="resize"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>サイズ設定 *</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
-                        <SelectTrigger className='w-full text-left'>
-                          <SelectValue placeholder="サイズを選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {resizeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                <div className="font-medium">{option.label}</div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={control}
+              name="resize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>サイズ設定 *</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="w-full text-left">
+                        <SelectValue placeholder="サイズを選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {resizeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="font-medium">{option.label}</div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* フォーマット設定 */}
-              <FormField
-                control={control}
-                name="format"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>出力形式 *</FormLabel>
-                    <FormControl>
-                      <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
-                        <SelectTrigger className='w-full text-left'>
-                          <SelectValue placeholder="出力形式を選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {formatOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                                <div className="font-medium">{option.label}</div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <FormField
+              control={control}
+              name="format"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>出力形式 *</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={disabled}
+                    >
+                      <SelectTrigger className="w-full text-left">
+                        <SelectValue placeholder="出力形式を選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {formatOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="font-medium">{option.label}</div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-
         </form>
       </div>
     </Form>

@@ -3,19 +3,23 @@ import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 
 interface FileInputProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect?: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   accept?: string;
   buttonText?: string;
   buttonVariant?: 'default' | 'outline' | 'secondary';
   buttonSize?: 'default' | 'sm' | 'lg';
+  multiple?: boolean;
 }
 
 export const FileInput: React.FC<FileInputProps> = ({
   onFileSelect,
+  onFilesSelect,
   accept,
   buttonText = 'ファイルを選択',
   buttonVariant = 'outline',
   buttonSize = 'sm',
+  multiple = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -23,10 +27,14 @@ export const FileInput: React.FC<FileInputProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (files && files.length > 0) {
-        onFileSelect(files[0]);
+        if (onFilesSelect && multiple) {
+          onFilesSelect(Array.from(files));
+        } else if (onFileSelect) {
+          onFileSelect(files[0]);
+        }
       }
     },
-    [onFileSelect]
+    [onFileSelect, onFilesSelect, multiple]
   );
 
   const handleButtonClick = () => {
@@ -39,6 +47,7 @@ export const FileInput: React.FC<FileInputProps> = ({
         ref={fileInputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         onChange={handleFileInputChange}
         className="hidden"
       />

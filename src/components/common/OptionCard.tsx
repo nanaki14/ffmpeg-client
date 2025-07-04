@@ -119,7 +119,11 @@ export const OptionCardGroup: React.FC<OptionCardGroupProps> = ({
     >
       {options.map((option) => (
         <div key={option.value}>
-          <RadioGroupItem value={option.value} id={option.value} className="sr-only" />
+          <RadioGroupItem
+            value={option.value}
+            id={option.value}
+            className="sr-only"
+          />
           <Label
             htmlFor={option.value}
             className={cn(

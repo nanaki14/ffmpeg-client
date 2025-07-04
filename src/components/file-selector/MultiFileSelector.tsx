@@ -41,57 +41,58 @@ export const MultiFileSelector: React.FC<MultiFileSelectorProps> = ({
     return null;
   };
 
-  const validateFiles = (
-    files: File[]
-  ): { validFiles: File[]; errors: string[] } => {
-    const validFiles: File[] = [];
-    const errors: string[] = [];
-
-    for (const file of files) {
-      const error = validateFile(file);
-      if (error) {
-        errors.push(error);
-      } else {
-        validFiles.push(file);
-      }
-    }
-
-    // 最大ファイル数チェック
-    const totalFiles = selectedFiles.length + validFiles.length;
-    if (totalFiles > maxFiles) {
-      const allowedCount = maxFiles - selectedFiles.length;
-      if (allowedCount <= 0) {
-        errors.push(`最大${maxFiles}ファイルまでしか選択できません`);
-        return { validFiles: [], errors };
-      } else {
-        errors.push(
-          `最大${maxFiles}ファイルまでしか選択できません。${allowedCount}ファイルのみ追加されます。`
-        );
-        validFiles.splice(allowedCount);
-      }
-    }
-
-    // 重複ファイルチェック
-    const duplicates: string[] = [];
-    const filteredFiles = validFiles.filter((file) => {
-      const isDuplicate = selectedFiles.some(
-        (selected) => selected.name === file.name && selected.size === file.size
-      );
-      if (isDuplicate) {
-        duplicates.push(file.name);
-      }
-      return !isDuplicate;
-    });
-
-    if (duplicates.length > 0) {
-      errors.push(`重複ファイル: ${duplicates.join(', ')}`);
-    }
-
-    return { validFiles: filteredFiles, errors };
-  };
-
   const handleFilesSelect = useCallback(
     (files: File[]) => {
+      const validateFiles = (
+        files: File[]
+      ): { validFiles: File[]; errors: string[] } => {
+        const validFiles: File[] = [];
+        const errors: string[] = [];
+
+        for (const file of files) {
+          const error = validateFile(file);
+          if (error) {
+            errors.push(error);
+          } else {
+            validFiles.push(file);
+          }
+        }
+
+        // 最大ファイル数チェック
+        const totalFiles = selectedFiles.length + validFiles.length;
+        if (totalFiles > maxFiles) {
+          const allowedCount = maxFiles - selectedFiles.length;
+          if (allowedCount <= 0) {
+            errors.push(`最大${maxFiles}ファイルまでしか選択できません`);
+            return { validFiles: [], errors };
+          } else {
+            errors.push(
+              `最大${maxFiles}ファイルまでしか選択できません。${allowedCount}ファイルのみ追加されます。`
+            );
+            validFiles.splice(allowedCount);
+          }
+        }
+
+        // 重複ファイルチェック
+        const duplicates: string[] = [];
+        const filteredFiles = validFiles.filter((file) => {
+          const isDuplicate = selectedFiles.some(
+            (selected) =>
+              selected.name === file.name && selected.size === file.size
+          );
+          if (isDuplicate) {
+            duplicates.push(file.name);
+          }
+          return !isDuplicate;
+        });
+
+        if (duplicates.length > 0) {
+          errors.push(`重複ファイル: ${duplicates.join(', ')}`);
+        }
+
+        return { validFiles: filteredFiles, errors };
+      };
+
       const { validFiles, errors } = validateFiles(files);
 
       if (errors.length > 0) {
@@ -112,16 +113,8 @@ export const MultiFileSelector: React.FC<MultiFileSelectorProps> = ({
         onFilesSelect([...selectedFiles, ...fileInfos]);
       }
     },
-    [selectedFiles, onFilesSelect, validateFiles]
+    [selectedFiles, onFilesSelect, maxFiles, validateFile]
   );
-
-  const handleFileInputSelect = (file: File) => {
-    handleFilesSelect([file]);
-  };
-
-  const _handleDropFiles = (files: File[]) => {
-    handleFilesSelect(files);
-  };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -140,7 +133,7 @@ export const MultiFileSelector: React.FC<MultiFileSelectorProps> = ({
     <div className="w-full space-y-4">
       {/* ドロップゾーン */}
       <FileDropZone
-        onFileSelect={(file) => handleFilesSelect([file])}
+        onFilesSelect={handleFilesSelect}
         accept={SUPPORTED_FORMATS.join(',')}
         maxSize={MAX_FILE_SIZE}
         className="p-8 text-center"
@@ -160,9 +153,10 @@ export const MultiFileSelector: React.FC<MultiFileSelectorProps> = ({
           </div>
           <div className="flex justify-center space-x-3">
             <FileInput
-              onFileSelect={handleFileInputSelect}
+              onFilesSelect={handleFilesSelect}
               accept={SUPPORTED_FORMATS.join(',')}
               buttonText="ファイルを追加"
+              multiple={true}
             />
           </div>
         </div>

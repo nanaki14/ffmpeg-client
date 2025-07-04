@@ -1,9 +1,22 @@
 import React from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormField,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   ConversionSettingsForm,
   ConversionSettingsFormSchema,
@@ -69,7 +82,9 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
                 <FormLabel>品質 *</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={errors.quality ? 'border-red-500' : ''}>
+                    <SelectTrigger
+                      className={errors.quality ? 'border-red-500' : ''}
+                    >
                       <SelectValue placeholder="品質を選択" />
                     </SelectTrigger>
                     <SelectContent>
@@ -94,7 +109,9 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
                 <FormLabel>リサイズ *</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={errors.resize ? 'border-red-500' : ''}>
+                    <SelectTrigger
+                      className={errors.resize ? 'border-red-500' : ''}
+                    >
                       <SelectValue placeholder="リサイズを選択" />
                     </SelectTrigger>
                     <SelectContent>
@@ -119,7 +136,9 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
                 <FormLabel>出力形式 *</FormLabel>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={errors.format ? 'border-red-500' : ''}>
+                    <SelectTrigger
+                      className={errors.format ? 'border-red-500' : ''}
+                    >
                       <SelectValue placeholder="出力形式を選択" />
                     </SelectTrigger>
                     <SelectContent>

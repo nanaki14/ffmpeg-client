@@ -11,33 +11,21 @@ export interface Toast {
 }
 
 export const useToast = () => {
-  const success = useCallback(
-    (message: string, duration?: number) => {
-      return toast.success(message, { duration });
-    },
-    []
-  );
+  const success = useCallback((message: string, duration?: number) => {
+    return toast.success(message, { duration });
+  }, []);
 
-  const error = useCallback(
-    (message: string, duration?: number) => {
-      return toast.error(message, { duration });
-    },
-    []
-  );
+  const error = useCallback((message: string, duration?: number) => {
+    return toast.error(message, { duration });
+  }, []);
 
-  const warning = useCallback(
-    (message: string, duration?: number) => {
-      return toast.warning(message, { duration });
-    },
-    []
-  );
+  const warning = useCallback((message: string, duration?: number) => {
+    return toast.warning(message, { duration });
+  }, []);
 
-  const info = useCallback(
-    (message: string, duration?: number) => {
-      return toast.info(message, { duration });
-    },
-    []
-  );
+  const info = useCallback((message: string, duration?: number) => {
+    return toast.info(message, { duration });
+  }, []);
 
   return {
     success,
