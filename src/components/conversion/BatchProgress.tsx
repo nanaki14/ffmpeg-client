@@ -7,7 +7,7 @@ import {
   FileImage,
   Pause,
 } from 'lucide-react';
-import { ProgressBar } from '@/components/common/ProgressBar';
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { BatchProgress as BatchProgressType, FileProgress } from '@/types';
 
@@ -90,11 +90,12 @@ export const BatchProgress: React.FC<BatchProgressProps> = ({
           )}
         </div>
 
-        <ProgressBar
-          progress={batchProgress.overallProgress}
-          color="blue"
-          showText={true}
-        />
+        <div className="space-y-2">
+          <Progress value={batchProgress.overallProgress} className="h-2" />
+          <div className="text-sm text-gray-600 text-center">
+            {Math.round(batchProgress.overallProgress)}%
+          </div>
+        </div>
 
         <div className="flex justify-between text-sm text-gray-500">
           <div className="flex items-center space-x-1">
@@ -152,10 +153,8 @@ export const BatchProgress: React.FC<BatchProgressProps> = ({
                 {/* ファイル個別の進捗バー */}
                 {fileProgress.status === 'processing' && (
                   <div className="space-y-2">
-                    <ProgressBar
-                      progress={fileProgress.progress.progress}
-                      color="blue"
-                      showText={false}
+                    <Progress
+                      value={fileProgress.progress.progress}
                       className="h-2"
                     />
                     <p className="text-xs text-gray-600">

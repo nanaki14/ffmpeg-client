@@ -2,7 +2,8 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { FormField, Select } from '@/components/common';
+import { FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ConversionSettingsForm,
   ConversionSettingsFormSchema,
@@ -61,21 +62,24 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
           name="quality"
           control={control}
           render={({ field }) => (
-            <FormField
-              label="品質"
-              id="quality"
-              error={errors.quality}
-              required
-            >
-              <Select
-                id="quality"
-                value={field.value}
-                options={qualityOptions}
-                onChange={field.onChange}
-                placeholder="品質を選択"
-                error={!!errors.quality}
-              />
-            </FormField>
+            <FormItem>
+              <FormLabel>品質 *</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className={errors.quality ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="品質を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {qualityOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
 
@@ -83,21 +87,24 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
           name="resize"
           control={control}
           render={({ field }) => (
-            <FormField
-              label="リサイズ"
-              id="resize"
-              error={errors.resize}
-              required
-            >
-              <Select
-                id="resize"
-                value={field.value}
-                options={resizeOptions}
-                onChange={field.onChange}
-                placeholder="リサイズを選択"
-                error={!!errors.resize}
-              />
-            </FormField>
+            <FormItem>
+              <FormLabel>リサイズ *</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className={errors.resize ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="リサイズを選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {resizeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
 
@@ -105,21 +112,24 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
           name="format"
           control={control}
           render={({ field }) => (
-            <FormField
-              label="出力形式"
-              id="format"
-              error={errors.format}
-              required
-            >
-              <Select
-                id="format"
-                value={field.value}
-                options={formatOptions}
-                onChange={field.onChange}
-                placeholder="出力形式を選択"
-                error={!!errors.format}
-              />
-            </FormField>
+            <FormItem>
+              <FormLabel>出力形式 *</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className={errors.format ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="出力形式を選択" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formatOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
       </div>

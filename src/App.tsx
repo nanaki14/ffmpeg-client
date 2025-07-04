@@ -8,7 +8,7 @@ import {
   BatchProgress,
   BatchResult,
 } from '@/components/conversion';
-import { ToastContainer } from '@/components/common';
+import { Toaster } from '@/components/ui/sonner';
 import { useToast } from '@/hooks/useToast';
 import { conversionApi } from '@/services/conversionApi';
 import {
@@ -34,7 +34,7 @@ function App() {
   );
   const [result, setResult] = useState<ResultType | null>(null);
   const [batchResults, setBatchResults] = useState<ResultType[]>([]);
-  const { toasts, removeToast, success, error } = useToast();
+  const { success, error } = useToast();
 
   const handleFileSelect = (file: FileInfo) => {
     setSelectedFile(file);
@@ -313,7 +313,7 @@ function App() {
           )}
         </div>
       </div>
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      <Toaster />
     </div>
   );
 }

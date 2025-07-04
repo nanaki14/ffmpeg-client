@@ -1,6 +1,6 @@
 import React from 'react';
 import { Loader2, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { ProgressBar } from '@/components/common/ProgressBar';
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ConversionProgress as ProgressType } from '@/types';
 
@@ -66,11 +66,12 @@ export const ConversionProgress: React.FC<ConversionProgressProps> = ({
       </div>
 
       <div className="space-y-3">
-        <ProgressBar
-          progress={progress.progress}
-          color={getStageColor()}
-          showText={true}
-        />
+        <div className="space-y-2">
+          <Progress value={progress.progress} className="h-2" />
+          <div className="text-sm text-gray-600 text-center">
+            {Math.round(progress.progress)}%
+          </div>
+        </div>
 
         <div className="flex justify-between text-sm text-gray-500">
           <div className="flex items-center space-x-1">

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface OptionCardProps {
   value: string;
@@ -94,7 +96,7 @@ interface OptionCardGroupProps {
 }
 
 export const OptionCardGroup: React.FC<OptionCardGroupProps> = ({
-  name: _name,
+  name,
   value,
   options,
   onChange,
@@ -109,19 +111,65 @@ export const OptionCardGroup: React.FC<OptionCardGroupProps> = ({
   };
 
   return (
-    <div className={cn('grid gap-3', gridCols[columns], className)}>
+    <RadioGroup
+      value={value}
+      onValueChange={onChange}
+      disabled={disabled}
+      className={cn('grid gap-3', gridCols[columns], className)}
+    >
       {options.map((option) => (
-        <OptionCard
-          key={option.value}
-          value={option.value}
-          label={option.label}
-          description={option.description}
-          icon={option.icon}
-          selected={value === option.value}
-          onSelect={onChange}
-          disabled={disabled}
-        />
+        <div key={option.value}>
+          <RadioGroupItem value={option.value} id={option.value} className="sr-only" />
+          <Label
+            htmlFor={option.value}
+            className={cn(
+              'relative p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md block',
+              value === option.value
+                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                : 'border-gray-200 hover:border-gray-300',
+              disabled && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            {value === option.value && (
+              <div className="absolute top-2 right-2">
+                <Check className="h-5 w-5 text-blue-600" />
+              </div>
+            )}
+            <div className="flex items-start space-x-3">
+              {option.icon && (
+                <div
+                  className={cn(
+                    'flex-shrink-0 mt-1',
+                    value === option.value ? 'text-blue-600' : 'text-gray-400'
+                  )}
+                >
+                  {option.icon}
+                </div>
+              )}
+              <div className="flex-1">
+                <h3
+                  className={cn(
+                    'font-medium',
+                    value === option.value ? 'text-blue-900' : 'text-gray-900'
+                  )}
+                >
+                  {option.label}
+                </h3>
+                {option.description && (
+                  <p
+                    className={cn(
+                      'text-sm mt-1',
+                      value === option.value ? 'text-blue-700' : 'text-gray-500'
+                    )}
+                  >
+                    {option.description}
+                  </p>
+                )}
+              </div>
+            </div>
+          </Label>
+        </div>
       ))}
-    </div>
+    </RadioGroup>
   );
 };

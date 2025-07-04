@@ -12,7 +12,8 @@ import {
   Tablet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FormField, OptionCardGroup } from '@/components/common';
+import { OptionCardGroup } from '@/components/common';
+import { FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import {
   ConversionSettingsForm,
   ConversionSettingsFormSchema,
@@ -141,12 +142,8 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
             name="quality"
             control={control}
             render={({ field }) => (
-              <FormField
-                label="画質設定"
-                id="quality"
-                error={errors.quality}
-                required
-              >
+              <FormItem>
+                <FormLabel>画質設定 *</FormLabel>
                 <OptionCardGroup
                   name="quality"
                   value={field.value}
@@ -155,7 +152,8 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
                   columns={2}
                   disabled={disabled}
                 />
-              </FormField>
+                <FormMessage />
+              </FormItem>
             )}
           />
         </div>
@@ -166,12 +164,8 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
             name="resize"
             control={control}
             render={({ field }) => (
-              <FormField
-                label="サイズ設定"
-                id="resize"
-                error={errors.resize}
-                required
-              >
+              <FormItem>
+                <FormLabel>サイズ設定 *</FormLabel>
                 <OptionCardGroup
                   name="resize"
                   value={field.value}
@@ -180,7 +174,8 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
                   columns={2}
                   disabled={disabled}
                 />
-              </FormField>
+                <FormMessage />
+              </FormItem>
             )}
           />
         </div>
@@ -191,12 +186,8 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
             name="format"
             control={control}
             render={({ field }) => (
-              <FormField
-                label="出力形式"
-                id="format"
-                error={errors.format}
-                required
-              >
+              <FormItem>
+                <FormLabel>出力形式 *</FormLabel>
                 <OptionCardGroup
                   name="format"
                   value={field.value}
@@ -205,7 +196,8 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
                   columns={3}
                   disabled={disabled}
                 />
-              </FormField>
+                <FormMessage />
+              </FormItem>
             )}
           />
         </div>
