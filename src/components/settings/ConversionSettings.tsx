@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Form, FormItem, FormLabel, FormControl, FormMessage, FormField } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ConversionSettingsForm,
@@ -27,14 +27,16 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
   },
   disabled = false,
 }) => {
+  const form = useForm<ConversionSettingsForm>({
+    resolver: zodResolver(ConversionSettingsFormSchema),
+    defaultValues,
+  });
+
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ConversionSettingsForm>({
-    resolver: zodResolver(ConversionSettingsFormSchema),
-    defaultValues,
-  });
+  } = form;
 
   const qualityOptions = Object.entries(QualityMapping).map(([key, value]) => ({
     value: key,
@@ -56,93 +58,95 @@ export const ConversionSettings: React.FC<ConversionSettingsProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Controller
-          name="quality"
-          control={control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>品質 *</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errors.quality ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="品質を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {qualityOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <Form {...form}>
+      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={control}
+            name="quality"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>品質 *</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className={errors.quality ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="品質を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {qualityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Controller
-          name="resize"
-          control={control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>リサイズ *</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errors.resize ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="リサイズを選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {resizeOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={control}
+            name="resize"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>リサイズ *</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className={errors.resize ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="リサイズを選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {resizeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Controller
-          name="format"
-          control={control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>出力形式 *</FormLabel>
-              <FormControl>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errors.format ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="出力形式を選択" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {formatOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+          <FormField
+            control={control}
+            name="format"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>出力形式 *</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className={errors.format ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="出力形式を選択" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {formatOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={disabled || isSubmitting}
-          className="px-8"
-        >
-          {isSubmitting ? '処理中...' : '変換開始'}
-        </Button>
-      </div>
-    </form>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={disabled || isSubmitting}
+            className="px-8"
+          >
+            {isSubmitting ? '処理中...' : '変換開始'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };

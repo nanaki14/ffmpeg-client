@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OptionCardGroup } from '@/components/common';
-import { FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormItem, FormLabel, FormMessage, FormField } from '@/components/ui/form';
 import {
   ConversionSettingsForm,
   ConversionSettingsFormSchema,
@@ -35,14 +35,16 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
   },
   disabled = false,
 }) => {
+  const form = useForm<ConversionSettingsForm>({
+    resolver: zodResolver(ConversionSettingsFormSchema),
+    defaultValues,
+  });
+
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ConversionSettingsForm>({
-    resolver: zodResolver(ConversionSettingsFormSchema),
-    defaultValues,
-  });
+  } = form;
 
   const qualityOptions = [
     {
@@ -134,86 +136,88 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
   };
 
   return (
-    <div className="space-y-8">
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-        {/* 品質設定 */}
-        <div>
-          <Controller
-            name="quality"
-            control={control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>画質設定 *</FormLabel>
-                <OptionCardGroup
-                  name="quality"
-                  value={field.value}
-                  options={qualityOptions}
-                  onChange={field.onChange}
-                  columns={2}
-                  disabled={disabled}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+    <Form {...form}>
+      <div className="space-y-8">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+          {/* 品質設定 */}
+          <div>
+            <FormField
+              control={control}
+              name="quality"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>画質設定 *</FormLabel>
+                  <OptionCardGroup
+                    name="quality"
+                    value={field.value}
+                    options={qualityOptions}
+                    onChange={field.onChange}
+                    columns={2}
+                    disabled={disabled}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        {/* リサイズ設定 */}
-        <div>
-          <Controller
-            name="resize"
-            control={control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>サイズ設定 *</FormLabel>
-                <OptionCardGroup
-                  name="resize"
-                  value={field.value}
-                  options={resizeOptions}
-                  onChange={field.onChange}
-                  columns={2}
-                  disabled={disabled}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          {/* リサイズ設定 */}
+          <div>
+            <FormField
+              control={control}
+              name="resize"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>サイズ設定 *</FormLabel>
+                  <OptionCardGroup
+                    name="resize"
+                    value={field.value}
+                    options={resizeOptions}
+                    onChange={field.onChange}
+                    columns={2}
+                    disabled={disabled}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        {/* フォーマット設定 */}
-        <div>
-          <Controller
-            name="format"
-            control={control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>出力形式 *</FormLabel>
-                <OptionCardGroup
-                  name="format"
-                  value={field.value}
-                  options={formatOptions}
-                  onChange={field.onChange}
-                  columns={3}
-                  disabled={disabled}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+          {/* フォーマット設定 */}
+          <div>
+            <FormField
+              control={control}
+              name="format"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>出力形式 *</FormLabel>
+                  <OptionCardGroup
+                    name="format"
+                    value={field.value}
+                    options={formatOptions}
+                    onChange={field.onChange}
+                    columns={3}
+                    disabled={disabled}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-        {/* 送信ボタン */}
-        <div className="flex justify-end pt-6 border-t">
-          <Button
-            type="submit"
-            disabled={disabled || isSubmitting}
-            className="px-8 py-3 text-lg"
-            size="lg"
-          >
-            {isSubmitting ? '処理中...' : '変換開始'}
-          </Button>
-        </div>
-      </form>
-    </div>
+          {/* 送信ボタン */}
+          <div className="flex justify-end pt-6 border-t">
+            <Button
+              type="submit"
+              disabled={disabled || isSubmitting}
+              className="px-8 py-3 text-lg"
+              size="lg"
+            >
+              {isSubmitting ? '処理中...' : '変換開始'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </Form>
   );
 };
