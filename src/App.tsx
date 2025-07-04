@@ -1,7 +1,10 @@
 import './App.css';
 import { useState } from 'react';
+import { Settings } from 'lucide-react';
 import { MultiFileSelector } from '@/components/file-selector';
 import { ConversionSettingsV2 } from '@/components/settings';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import {
   BatchProgress,
   BatchResult,
@@ -25,21 +28,24 @@ function App() {
     null
   );
   const [batchResults, setBatchResults] = useState<ResultType[]>([]);
+  const [globalSettings, setGlobalSettings] = useState<ConversionSettingsForm>({
+    quality: 'high',
+    resize: 'original',
+    format: 'auto',
+  });
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { success, error } = useToast();
 
 
   const handleFilesSelect = (files: FileInfo[]) => {
     setSelectedFiles(files);
-    setStage('settings');
   };
 
   const handleFileRemove = (index?: number) => {
     if (index !== undefined) {
       const newFiles = selectedFiles.filter((_, i) => i !== index);
       setSelectedFiles(newFiles);
-      if (newFiles.length === 0) {
-        setStage('select');
-      }
+      // ファイルがなくなってもselect状態を維持
     }
     setBatchProgress(null);
     setBatchResults([]);
@@ -47,12 +53,43 @@ function App() {
 
   const handleClearAllFiles = () => {
     setSelectedFiles([]);
-    setStage('select');
     setBatchProgress(null);
     setBatchResults([]);
   };
 
-  const handleConversionSubmit = async (settings: ConversionSettingsForm) => {
+  const handleSettingsChange = (settings: ConversionSettingsForm) => {
+    setGlobalSettings(settings);
+  };
+
+  const getSettingsDisplayText = () => {
+    const qualityLabels = {
+      maximum_compression: '最高圧縮',
+      compressed: '高圧縮', 
+      standard: '標準',
+      high: '高品質',
+      highest: '最高品質'
+    };
+    const resizeLabels = {
+      original: '元サイズ',
+      '1/2': '1/2',
+      '1/3': '1/3', 
+      '1/4': '1/4',
+      '1/8': '1/8'
+    };
+    const formatLabels = {
+      auto: '元の形式',
+      jpeg: 'JPEG',
+      png: 'PNG',
+      webp: 'WebP',
+      avif: 'AVIF',
+      gif: 'GIF',
+      heic: 'HEIC'
+    };
+    
+    return `${qualityLabels[globalSettings.quality as keyof typeof qualityLabels]} / ${resizeLabels[globalSettings.resize as keyof typeof resizeLabels]} / ${formatLabels[globalSettings.format as keyof typeof formatLabels]}`;
+  };
+
+  const handleConversionStart = async () => {
     if (selectedFiles.length === 0) {
       error('ファイルを選択してください');
       return;
@@ -64,7 +101,7 @@ function App() {
 
     try {
       const results = await conversionApi.convertBatch(
-        { files: selectedFiles, settings },
+        { files: selectedFiles, settings: globalSettings },
         (batchProgressUpdate) => {
           setBatchProgress(batchProgressUpdate);
         }
@@ -83,13 +120,13 @@ function App() {
     } catch (err) {
       console.error('バッチ変換エラー:', err);
       error('バッチ変換に失敗しました');
-      setStage('settings');
+      setStage('select');
     }
   };
 
   const handleCancel = () => {
     conversionApi.cancelBatch();
-    setStage('settings');
+    setStage('select');
     setBatchProgress(null);
   };
 
@@ -122,15 +159,41 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
-          ImageOptimizer
-        </h1>
-        <p className="text-gray-600 text-center mb-8">FFmpeg画像最適化ツール</p>
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              ImageOptimizer
+            </h1>
+            <p className="text-gray-600">FFmpeg画像最適化ツール</p>
+          </div>
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                設定
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>変換設定</DialogTitle>
+              </DialogHeader>
+              <ConversionSettingsV2
+                onSubmit={handleSettingsChange}
+                defaultValues={globalSettings}
+                disabled={false}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+        
+        <div className="text-center mb-6 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-600 mb-1">現在の設定</p>
+          <p className="font-medium text-gray-800">{getSettingsDisplayText()}</p>
+        </div>
 
         <div className="space-y-8">
-
-          {/* ファイル選択段階 */}
-          {(stage === 'select' || stage === 'settings') && (
+          {/* ファイル選択 */}
+          {stage === 'select' && (
             <div>
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
                 ファイル選択
@@ -145,20 +208,20 @@ function App() {
             </div>
           )}
 
-          {/* 設定段階 */}
-          {stage === 'settings' && selectedFiles.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                変換設定
-              </h2>
-              <ConversionSettingsV2
-                onSubmit={handleConversionSubmit}
-                disabled={false}
-              />
+          {/* 変換開始ボタン */}
+          {stage === 'select' && selectedFiles.length > 0 && (
+            <div className="flex justify-center">
+              <Button
+                onClick={handleConversionStart}
+                size="lg"
+                className="px-8 py-3"
+              >
+                変換開始（{selectedFiles.length}ファイル）
+              </Button>
             </div>
           )}
 
-          {/* 変換中段階 */}
+          {/* 変換中 */}
           {stage === 'converting' && (
             <div>
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
@@ -175,7 +238,7 @@ function App() {
             </div>
           )}
 
-          {/* 結果段階 */}
+          {/* 変換結果 */}
           {stage === 'result' && (
             <div>
               <h2 className="text-lg font-semibold text-gray-700 mb-4">

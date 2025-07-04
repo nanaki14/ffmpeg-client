@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OptionCardGroup } from '@/components/common';
-import { Form, FormItem, FormLabel, FormMessage, FormField } from '@/components/ui/form';
+import { Form, FormItem, FormLabel, FormMessage, FormField, FormControl } from '@/components/ui/form';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   ConversionSettingsForm,
   ConversionSettingsFormSchema,
@@ -29,7 +31,7 @@ interface ConversionSettingsV2Props {
 export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
   onSubmit,
   defaultValues = {
-    quality: 'standard',
+    quality: 'high',
     resize: 'original',
     format: 'auto',
   },
@@ -47,69 +49,43 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
   } = form;
 
   const qualityOptions = [
-    {
-      value: 'maximum_compression',
-      label: '最高圧縮',
-      description: 'ファイルサイズ最小（品質: 50%）',
-      icon: <Zap className="h-5 w-5" />,
-    },
-    {
-      value: 'compressed',
-      label: '高圧縮',
-      description: 'バランス重視（品質: 65%）',
-      icon: <Settings className="h-5 w-5" />,
-    },
-    {
-      value: 'standard',
-      label: '標準',
-      description: '一般的な用途（品質: 75%）',
-      icon: <Image className="h-5 w-5" />,
-    },
-    {
-      value: 'high',
-      label: '高品質',
-      description: '高画質重視（品質: 85%）',
-      icon: <FileImage className="h-5 w-5" />,
-    },
-    {
-      value: 'highest',
-      label: '最高品質',
-      description: '最高画質（品質: 95%）',
-      icon: <Maximize2 className="h-5 w-5" />,
-    },
+    'maximum_compression',
+    'compressed', 
+    'standard',
+    'high',
+    'highest'
   ];
 
+  const qualityLabels = {
+    maximum_compression: '最高圧縮',
+    compressed: '高圧縮',
+    standard: '標準',
+    high: '高品質',
+    highest: '最高品質'
+  };
+
+  const qualityDescriptions = {
+    maximum_compression: 'ファイルサイズ最小（品質: 50%）',
+    compressed: 'バランス重視（品質: 65%）',
+    standard: '一般的な用途（品質: 75%）',
+    high: '高画質重視（品質: 85%）',
+    highest: '最高画質（品質: 95%）'
+  };
+
+  const getQualitySliderValue = (quality: string) => {
+    return qualityOptions.indexOf(quality);
+  };
+
+  const getQualityFromSliderValue = (value: number) => {
+    return qualityOptions[value];
+  };
+
   const resizeOptions = [
-    {
-      value: 'original',
-      label: '元サイズ',
-      description: 'サイズを変更しない',
-      icon: <Monitor className="h-5 w-5" />,
-    },
-    {
-      value: '1/2',
-      label: '1/2サイズ',
-      description: '50%に縮小',
-      icon: <Tablet className="h-5 w-5" />,
-    },
-    {
-      value: '1/3',
-      label: '1/3サイズ',
-      description: '33%に縮小',
-      icon: <Smartphone className="h-5 w-5" />,
-    },
-    {
-      value: '1/4',
-      label: '1/4サイズ',
-      description: '25%に縮小',
-      icon: <Smartphone className="h-5 w-5" />,
-    },
-    {
-      value: '1/8',
-      label: '1/8サイズ',
-      description: '12.5%に縮小（サムネイル）',
-      icon: <Smartphone className="h-5 w-5" />,
-    },
+    { value: 'original', label: '元サイズ', description: 'サイズを変更しない' },
+    { value: '1/2', label: '1/2', description: '50%に縮小' },
+    { value: '1/3', label: '1/3', description: '33%に縮小' },
+    { value: '1/4', label: '1/4', description: '25%に縮小' },
+    { value: '1/8', label: '1/8', description: '12.5%に縮小' },
   ];
 
   const formatOptions = Object.entries(FormatMapping).map(([key, value]) => ({
@@ -135,6 +111,16 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
     onSubmit(data);
   };
 
+  // リアルタイム設定変更を通知
+  React.useEffect(() => {
+    const subscription = form.watch((data) => {
+      if (data.quality && data.resize && data.format) {
+        onSubmit(data as ConversionSettingsForm);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, onSubmit]);
+
   return (
     <Form {...form}>
       <div className="space-y-8">
@@ -147,75 +133,96 @@ export const ConversionSettingsV2: React.FC<ConversionSettingsV2Props> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>画質設定 *</FormLabel>
-                  <OptionCardGroup
-                    name="quality"
-                    value={field.value}
-                    options={qualityOptions}
-                    onChange={field.onChange}
-                    columns={2}
-                    disabled={disabled}
-                  />
+                  <div className="space-y-4">
+                    <div className="px-3">
+                      <Slider
+                        value={[getQualitySliderValue(field.value)]}
+                        onValueChange={(value) => field.onChange(getQualityFromSliderValue(value[0]))}
+                        max={4}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                        disabled={disabled}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500 px-3">
+                      <span>最高圧縮</span>
+                      <span>高圧縮</span>
+                      <span>標準</span>
+                      <span>高品質</span>
+                      <span>最高品質</span>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="font-medium text-gray-900">
+                        {qualityLabels[field.value as keyof typeof qualityLabels]}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {qualityDescriptions[field.value as keyof typeof qualityDescriptions]}
+                      </div>
+                    </div>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          {/* リサイズ設定 */}
-          <div>
-            <FormField
-              control={control}
-              name="resize"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>サイズ設定 *</FormLabel>
-                  <OptionCardGroup
-                    name="resize"
-                    value={field.value}
-                    options={resizeOptions}
-                    onChange={field.onChange}
-                    columns={2}
-                    disabled={disabled}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className='grid grid-cols-2 gap-4'>
+
+            {/* リサイズ設定 */}
+              <FormField
+                control={control}
+                name="resize"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>サイズ設定 *</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
+                        <SelectTrigger className='w-full text-left'>
+                          <SelectValue placeholder="サイズを選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {resizeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                <div className="font-medium">{option.label}</div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+            {/* フォーマット設定 */}
+              <FormField
+                control={control}
+                name="format"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>出力形式 *</FormLabel>
+                    <FormControl>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
+                        <SelectTrigger className='w-full text-left'>
+                          <SelectValue placeholder="出力形式を選択" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formatOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                <div className="font-medium">{option.label}</div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
           </div>
 
-          {/* フォーマット設定 */}
-          <div>
-            <FormField
-              control={control}
-              name="format"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>出力形式 *</FormLabel>
-                  <OptionCardGroup
-                    name="format"
-                    value={field.value}
-                    options={formatOptions}
-                    onChange={field.onChange}
-                    columns={3}
-                    disabled={disabled}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* 送信ボタン */}
-          <div className="flex justify-end pt-6 border-t">
-            <Button
-              type="submit"
-              disabled={disabled || isSubmitting}
-              className="px-8 py-3 text-lg"
-              size="lg"
-            >
-              {isSubmitting ? '処理中...' : '変換開始'}
-            </Button>
-          </div>
         </form>
       </div>
     </Form>
