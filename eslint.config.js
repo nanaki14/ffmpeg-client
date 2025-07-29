@@ -7,9 +7,11 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import unusedImports from 'eslint-plugin-unused-imports';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import electronConfig from '@electron-toolkit/eslint-config'
 
 export default [
   js.configs.recommended,
+  electronConfig,
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {

@@ -30,6 +30,11 @@ export const FileInfo: React.FC<FileInfoProps> = ({
       <div className="text-sm text-gray-600">
         <p className="font-medium">{file.name}</p>
         <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+        {file.path && (
+          <p className="text-xs text-gray-400 truncate" title={file.path}>
+            {file.path}
+          </p>
+        )}
       </div>
       {showRemoveButton && (
         <Button

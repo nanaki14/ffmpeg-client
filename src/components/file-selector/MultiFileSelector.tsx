@@ -31,9 +31,17 @@ export const MultiFileSelector: React.FC<MultiFileSelectorProps> = ({
       return `${file.name}: ファイルサイズが100MBを超えています`;
     }
 
-    if (!SUPPORTED_FORMATS.includes(file.type as string)) {
+    if (
+      !SUPPORTED_FORMATS.includes(
+        file.type as (typeof SUPPORTED_FORMATS)[number]
+      )
+    ) {
       const extension = '.' + file.name.split('.').pop()?.toLowerCase();
-      if (!SUPPORTED_EXTENSIONS.includes(extension as string)) {
+      if (
+        !SUPPORTED_EXTENSIONS.includes(
+          extension as (typeof SUPPORTED_EXTENSIONS)[number]
+        )
+      ) {
         return `${file.name}: 対応していないファイル形式です`;
       }
     }
@@ -102,19 +110,30 @@ export const MultiFileSelector: React.FC<MultiFileSelectorProps> = ({
       }
 
       if (validFiles.length > 0) {
-        const fileInfos: FileInfo[] = validFiles.map((file) => ({
-          name: file.name,
-          path: file.path || '',
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified,
-        }));
+        const fileInfos: FileInfo[] = validFiles.map((file) => {
+          let filePath = '';
+          try {
+            filePath = window.webUtils?.getPathForFile(file) || '';
+          } catch (error) {
+            console.warn('Failed to get file path:', error);
+            filePath = file.name;
+          }
+
+          return {
+            name: file.name,
+            path: filePath,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+          };
+        });
 
         onFilesSelect([...selectedFiles, ...fileInfos]);
       }
     },
     [selectedFiles, onFilesSelect, maxFiles, validateFile]
   );
+
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';

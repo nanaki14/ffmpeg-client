@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "electron": "electron dist/main.js",
-    "electron-dev": "tsc --project tsconfig.node.json && electron dist/main.js",
+    "electron-dev": "npm run build && tsc --project tsconfig.node.json && tsc --project tsconfig.preload.json && NODE_ENV=production electron dist/main.js",
     "build-electron": "tsc --project tsconfig.node.json",
     "start": "npm run build && npm run build-electron && npm run electron",
     "lint": "eslint src --ext .ts,.tsx",
@@ -33,6 +33,8 @@
   },
   "homepage": "https://github.com/nanaki14/ffmpeg-client#readme",
   "devDependencies": {
+    "@electron-toolkit/eslint-config": "^2.1.0",
+    "@electron-toolkit/tsconfig": "^1.0.1",
     "@shadcn/ui": "^0.0.4",
     "@tailwindcss/postcss": "^4.1.11",
     "@testing-library/jest-dom": "^6.6.3",
