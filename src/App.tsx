@@ -26,9 +26,6 @@ type AppStage = 'select' | 'settings' | 'converting' | 'result';
 
 function App() {
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
-
-  console.log({ selectedFiles });
-
   const [stage, setStage] = useState<AppStage>('select');
   const [batchProgress, setBatchProgress] = useState<BatchProgressType | null>(
     null
@@ -162,11 +159,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      {selectedFiles.map((file) => (
-        <div key={file.name}>
-          {file.name}: {file.path}
-        </div>
-      ))}
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="text-center flex-1">

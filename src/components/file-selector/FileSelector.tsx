@@ -58,7 +58,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
       }
 
       setError(null);
-      
+
       let filePath = '';
       try {
         filePath = window.webUtils?.getPathForFile(file) || '';
@@ -66,7 +66,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         console.warn('Failed to get file path:', error);
         filePath = file.name; // フォールバックとしてファイル名を使用
       }
-      
+
       const fileInfo: FileInfoType = {
         name: file.name,
         path: filePath,
