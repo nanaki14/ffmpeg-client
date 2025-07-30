@@ -9,6 +9,7 @@ import {
   BatchProgress,
   BatchProgressCallback,
   FileProgress,
+  FileInfo,
 } from '@/types';
 
 class FFmpegConversionAPI implements ConversionAPI {
@@ -156,6 +157,23 @@ class FFmpegConversionAPI implements ConversionAPI {
     this.cancelledFiles.clear();
 
     const { files, settings } = request;
+
+    // 複数ファイルの場合は一時フォルダを作成
+    const tempFolderResult = await window.electronAPI.createTempFolder();
+    if (!tempFolderResult.success || !tempFolderResult.path) {
+      console.error('一時フォルダ作成に失敗しました:', tempFolderResult.error);
+      return files.map((file) => ({
+        success: false,
+        originalSize: file.size,
+        compressedSize: 0,
+        compressionRatio: 0,
+        processingTime: 0,
+        error: tempFolderResult.error || '一時フォルダの作成に失敗しました',
+      }));
+    }
+
+    const tempFolder = tempFolderResult.path;
+    console.log('バッチ処理用一時フォルダ:', tempFolder);
     const results: ConversionResult[] = [];
     const fileProgresses = new Map<string, FileProgress>();
     const startTime = Date.now();
@@ -236,10 +254,20 @@ class FFmpegConversionAPI implements ConversionAPI {
       updateBatchProgress(i);
 
       try {
-        const result = await this.convert({ file, settings }, (progress) => {
-          fileProgress.progress = progress;
-          updateBatchProgress(i);
-        });
+        // バッチ処理では出力パスを自動生成
+        const outputPath = this.generateBatchOutputPath(
+          file,
+          settings,
+          tempFolder
+        );
+        const result = await this.convertWithOutputPath(
+          { file, settings },
+          outputPath,
+          (progress) => {
+            fileProgress.progress = progress;
+            updateBatchProgress(i);
+          }
+        );
 
         fileProgress.status = result.success ? 'completed' : 'error';
         fileProgress.result = result;
@@ -268,6 +296,12 @@ class FFmpegConversionAPI implements ConversionAPI {
 
     // 最終更新
     updateBatchProgress(files.length - 1);
+
+    // 一時フォルダのパスを保存（ZIPダウンロード時にクリーンアップするため）
+    if (results.length > 0) {
+      (results as ConversionResult[] & { tempFolder?: string }).tempFolder =
+        tempFolder;
+    }
 
     return results;
   }
@@ -343,7 +377,7 @@ class FFmpegConversionAPI implements ConversionAPI {
   ): Promise<string | null> {
     const ext = this.getOutputExtension(file.name, settings.format);
     const baseName = file.name.replace(/\.[^/.]+$/, '');
-    const defaultName = `${baseName}_optimized.${ext}`;
+    const defaultName = `${baseName}.${ext}`;
 
     const result = await window.electronAPI.showSaveDialog({
       title: '保存先を選択',
@@ -356,6 +390,177 @@ class FFmpegConversionAPI implements ConversionAPI {
     });
 
     return result.canceled ? null : result.filePath || null;
+  }
+
+  async createAndDownloadZip(
+    filePaths: string[],
+    tempFolder?: string
+  ): Promise<void> {
+    const zipName = `optimized-images-${Date.now()}`;
+
+    try {
+      // ZIP作成
+      const zipResult = await window.electronAPI.createZip(filePaths, zipName);
+
+      if (!zipResult.success || !zipResult.zipPath) {
+        throw new Error('ZIP作成に失敗しました');
+      }
+
+      // ZIP ダウンロード
+      const downloadResult = await window.electronAPI.downloadZip(
+        zipResult.zipPath,
+        `${zipName}.zip`
+      );
+
+      if (!downloadResult.success && !downloadResult.canceled) {
+        throw new Error(downloadResult.error || 'ダウンロードに失敗しました');
+      }
+    } finally {
+      // 一時フォルダをクリーンアップ（提供された場合のみ）
+      if (tempFolder) {
+        await window.electronAPI.cleanupTempFolder(tempFolder);
+      }
+    }
+  }
+
+  private generateBatchOutputPath(
+    file: FileInfo,
+    settings: ConversionSettings,
+    outputFolder: string
+  ): string {
+    const ext = this.getOutputExtension(file.name, settings.format);
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const fileName = `${baseName}.${ext}`;
+    // パスの区切り文字を適切に処理
+    return outputFolder.endsWith('/') || outputFolder.endsWith('\\')
+      ? `${outputFolder}${fileName}`
+      : `${outputFolder}/${fileName}`;
+  }
+
+  private async convertWithOutputPath(
+    request: ConversionRequest,
+    outputPath: string,
+    onProgress?: ProgressCallback
+  ): Promise<ConversionResult> {
+    const { file, settings } = request;
+    const startTime = Date.now();
+
+    try {
+      // 準備段階
+      await this.updateProgress(
+        {
+          stage: 'preparing',
+          progress: 10,
+          message: 'ファイルの準備をしています...',
+          timeElapsed: 0,
+        },
+        onProgress
+      );
+
+      if (this.isCancelled) throw new Error('変換がキャンセルされました');
+
+      await this.updateProgress(
+        {
+          stage: 'processing',
+          progress: 30,
+          message: 'FFmpegで変換を開始しています...',
+          timeElapsed: (Date.now() - startTime) / 1000,
+        },
+        onProgress
+      );
+
+      // 進捗更新のリスナーを設定
+      const progressListener = (progress: {
+        stage: string;
+        message: string;
+        timeElapsed?: number;
+      }) => {
+        if (onProgress) {
+          onProgress({
+            stage: 'processing',
+            progress: Math.min(95, 30 + (progress.timeElapsed || 0) * 10),
+            message: progress.message || '変換中...',
+            timeElapsed: (Date.now() - startTime) / 1000,
+          });
+        }
+      };
+
+      window.electronAPI.onConversionProgress(progressListener);
+
+      try {
+        // FFmpeg実行
+        const result = await window.electronAPI.convertImage(
+          file.path,
+          outputPath,
+          {
+            quality: settings.quality,
+            resize: settings.resize,
+            format: settings.format,
+          }
+        );
+
+        if (!result.success) {
+          throw new Error('FFmpeg変換に失敗しました');
+        }
+
+        // 変換完了
+        await this.updateProgress(
+          {
+            stage: 'completed',
+            progress: 100,
+            message: '変換が完了しました！',
+            timeElapsed: (Date.now() - startTime) / 1000,
+          },
+          onProgress
+        );
+
+        // 出力ファイル情報を取得
+        const outputStats = await window.electronAPI.getFileStats(outputPath);
+        if (!outputStats.exists) {
+          throw new Error('出力ファイルが見つかりません');
+        }
+        const compressionRatio =
+          ((file.size - outputStats.size) / file.size) * 100;
+
+        return {
+          success: true,
+          outputFile: {
+            name: outputPath.split('/').pop() || 'output',
+            path: outputPath,
+            size: outputStats.size,
+            format: this.getOutputFormat(outputPath, settings.format),
+          },
+          originalSize: file.size,
+          compressedSize: outputStats.size,
+          compressionRatio,
+          processingTime: (Date.now() - startTime) / 1000,
+        };
+      } finally {
+        window.electronAPI.removeProgressListener();
+      }
+    } catch (error) {
+      await this.updateProgress(
+        {
+          stage: 'error',
+          progress: 0,
+          message:
+            error instanceof Error
+              ? error.message
+              : '変換中にエラーが発生しました',
+          timeElapsed: (Date.now() - startTime) / 1000,
+        },
+        onProgress
+      );
+
+      return {
+        success: false,
+        originalSize: file.size,
+        compressedSize: 0,
+        compressionRatio: 0,
+        processingTime: (Date.now() - startTime) / 1000,
+        error: error instanceof Error ? error.message : '変換に失敗しました',
+      };
+    }
   }
 
   private getOutputExtension(originalName: string, format: string): string {

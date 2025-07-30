@@ -15,16 +15,14 @@ import { ConversionResult } from '@/types';
 interface BatchResultProps {
   results: ConversionResult[];
   filenames: string[];
-  onDownloadAll?: () => void;
-  onDownloadFile?: (index: number) => void;
+  onDownloadZip?: () => void;
   onReset?: () => void;
 }
 
 export const BatchResult: React.FC<BatchResultProps> = ({
   results,
   filenames,
-  onDownloadAll,
-  onDownloadFile,
+  onDownloadZip,
   onReset,
 }) => {
   const formatFileSize = (bytes: number): string => {
@@ -141,10 +139,10 @@ export const BatchResult: React.FC<BatchResultProps> = ({
 
         {/* アクション */}
         <div className="flex space-x-3">
-          {successfulResults.length > 0 && onDownloadAll && (
-            <Button onClick={onDownloadAll} className="flex-1">
+          {successfulResults.length > 0 && onDownloadZip && (
+            <Button onClick={onDownloadZip} className="flex-1">
               <Download className="h-4 w-4 mr-2" />
-              すべてダウンロード ({successfulResults.length}件)
+              ZIPでダウンロード ({successfulResults.length}件)
             </Button>
           )}
           <Button onClick={onReset} variant="outline">
@@ -192,17 +190,6 @@ export const BatchResult: React.FC<BatchResultProps> = ({
                     )}
                   </div>
                 </div>
-
-                {result.success && onDownloadFile && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDownloadFile(index)}
-                    className="text-green-600 hover:text-green-700 hover:bg-green-100"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
             </div>
           ))}

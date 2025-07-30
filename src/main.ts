@@ -2,8 +2,18 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { spawn } from 'child_process';
-import { existsSync, statSync, copyFileSync, unlinkSync } from 'fs';
+import {
+  existsSync,
+  statSync,
+  copyFileSync,
+  unlinkSync,
+  createWriteStream,
+  mkdirSync,
+  readdirSync,
+  rmdirSync,
+} from 'fs';
 import { tmpdir } from 'os';
+import archiver from 'archiver';
 
 interface ConversionOptions {
   quality:
@@ -77,8 +87,11 @@ ipcMain.handle(
       const handleConversion = async (): Promise<void> => {
         try {
           // PNG形式の場合は専用最適化を試行
+          const inputExt = inputPath.split('.').pop()?.toLowerCase();
           const outputExt = outputPath.split('.').pop()?.toLowerCase();
-          if (outputExt === 'png') {
+
+          // 入力がPNGで、出力もPNG（autoまたは明示的にpng指定）の場合のみPNG最適化を適用
+          if (inputExt === 'png' && outputExt === 'png') {
             const optimizedResult = await optimizePngWithExternalTools(
               inputPath,
               outputPath,
@@ -153,6 +166,16 @@ ipcMain.handle('show-save-dialog', async (event, options) => {
   return await dialog.showSaveDialog(mainWindow, options);
 });
 
+// フォルダ選択ダイアログ
+ipcMain.handle('show-open-dialog', async (event, options) => {
+  const mainWindow = BrowserWindow.fromWebContents(event.sender);
+  if (!mainWindow) {
+    throw new Error('Main window not found');
+  }
+
+  return await dialog.showOpenDialog(mainWindow, options);
+});
+
 // ファイル情報取得
 ipcMain.handle('get-file-stats', async (_, filePath: string) => {
   try {
@@ -166,6 +189,175 @@ ipcMain.handle('get-file-stats', async (_, filePath: string) => {
       size: 0,
       exists: false,
       error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+});
+
+// zipファイル作成
+ipcMain.handle(
+  'create-zip',
+  async (_, filePaths: string[], zipName: string) => {
+    return new Promise((resolve, reject) => {
+      // 一時フォルダにzipファイルを作成
+      const tempZipPath = join(tmpdir(), `${zipName}.zip`);
+      const output = createWriteStream(tempZipPath);
+      const archive = archiver('zip', {
+        zlib: { level: 9 }, // 最高圧縮レベル
+      });
+
+      output.on('close', () => {
+        console.log(`ZIP作成完了: ${archive.pointer()} bytes`);
+        resolve({
+          success: true,
+          zipPath: tempZipPath,
+          size: archive.pointer(),
+        });
+      });
+
+      archive.on('error', (err) => {
+        console.error('ZIP作成エラー:', err);
+        reject(err);
+      });
+
+      archive.pipe(output);
+
+      // ファイルをzipに追加
+      filePaths.forEach((filePath) => {
+        if (existsSync(filePath)) {
+          const fileName = filePath.split('/').pop() || 'file';
+          archive.file(filePath, { name: fileName });
+          console.log(`ZIPに追加: ${fileName}`);
+        }
+      });
+
+      archive.finalize();
+    });
+  }
+);
+
+// zipファイルのダウンロード処理
+ipcMain.handle(
+  'download-zip',
+  async (event, zipPath: string, defaultName: string) => {
+    const mainWindow = BrowserWindow.fromWebContents(event.sender);
+    if (!mainWindow) {
+      throw new Error('Main window not found');
+    }
+
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'ZIPファイルを保存',
+      defaultPath: defaultName,
+      buttonLabel: '保存',
+      filters: [
+        { name: 'ZIPファイル', extensions: ['zip'] },
+        { name: 'すべてのファイル', extensions: ['*'] },
+      ],
+    });
+
+    if (result.canceled || !result.filePath) {
+      return { success: false, canceled: true };
+    }
+
+    try {
+      // zipファイルを指定された場所にコピー
+      copyFileSync(zipPath, result.filePath);
+
+      // 一時zipファイルを削除
+      if (existsSync(zipPath)) {
+        unlinkSync(zipPath);
+      }
+
+      return {
+        success: true,
+        filePath: result.filePath,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'ダウンロードに失敗しました',
+      };
+    }
+  }
+);
+
+// 一時フォルダ作成
+ipcMain.handle('create-temp-folder', async () => {
+  try {
+    const tempDir = tmpdir();
+    const folderName = `image-optimizer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const tempPath = join(tempDir, folderName);
+
+    console.log('一時フォルダ作成試行:', tempPath);
+
+    if (!existsSync(tempPath)) {
+      mkdirSync(tempPath, { recursive: true });
+      console.log('一時フォルダ作成成功:', tempPath);
+    }
+
+    if (!existsSync(tempPath)) {
+      throw new Error('フォルダ作成後に存在確認に失敗しました');
+    }
+
+    return {
+      success: true,
+      path: tempPath,
+    };
+  } catch (error) {
+    console.error('一時フォルダ作成エラー:', error);
+
+    // フォールバック: より簡単なパスで再試行
+    try {
+      const fallbackPath = join(tmpdir(), `img-opt-${Date.now()}`);
+      console.log('フォールバック一時フォルダ作成試行:', fallbackPath);
+
+      mkdirSync(fallbackPath);
+      if (existsSync(fallbackPath)) {
+        console.log('フォールバック一時フォルダ作成成功:', fallbackPath);
+        return {
+          success: true,
+          path: fallbackPath,
+        };
+      }
+    } catch (fallbackError) {
+      console.error('フォールバック一時フォルダ作成も失敗:', fallbackError);
+    }
+
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : '一時フォルダの作成に失敗しました',
+    };
+  }
+});
+
+// 一時フォルダクリーンアップ
+ipcMain.handle('cleanup-temp-folder', async (_, tempFolder: string) => {
+  try {
+    if (existsSync(tempFolder)) {
+      // フォルダ内のファイルを削除
+      const files = readdirSync(tempFolder);
+      files.forEach((file: string) => {
+        const filePath = join(tempFolder, file);
+        if (existsSync(filePath)) {
+          unlinkSync(filePath);
+        }
+      });
+
+      // フォルダを削除
+      rmdirSync(tempFolder);
+      console.log('一時フォルダクリーンアップ完了:', tempFolder);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('一時フォルダクリーンアップエラー:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'クリーンアップに失敗しました',
     };
   }
 });
@@ -473,12 +665,11 @@ async function optimizePngWithExternalTools(
       // pngquant等の外部ツールを試行（利用可能な場合）
       tryPngQuantOptimization(tempPath, outputPath, options)
         .then((success) => {
-          // 一時ファイルをクリーンアップ
-          if (existsSync(tempPath)) {
-            unlinkSync(tempPath);
-          }
-
           if (success) {
+            // 成功時は一時ファイルをクリーンアップ
+            if (existsSync(tempPath)) {
+              unlinkSync(tempPath);
+            }
             resolve({
               success: true,
               outputPath,
@@ -488,6 +679,7 @@ async function optimizePngWithExternalTools(
             // 外部ツールが失敗した場合は基本変換結果をコピー
             if (existsSync(tempPath)) {
               copyFileSync(tempPath, outputPath);
+              unlinkSync(tempPath); // コピー後にクリーンアップ
               resolve({
                 success: true,
                 outputPath,
@@ -502,9 +694,7 @@ async function optimizePngWithExternalTools(
           // エラー時も基本変換結果をコピー
           if (existsSync(tempPath)) {
             copyFileSync(tempPath, outputPath);
-            if (existsSync(tempPath)) {
-              unlinkSync(tempPath);
-            }
+            unlinkSync(tempPath); // コピー後にクリーンアップ
             resolve({
               success: true,
               outputPath,

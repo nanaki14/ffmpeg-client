@@ -38,9 +38,52 @@ interface ElectronAPI {
     filePath?: string;
   }>;
 
+  showOpenDialog: (options: {
+    title?: string;
+    defaultPath?: string;
+    buttonLabel?: string;
+    properties?: string[];
+  }) => Promise<{
+    canceled: boolean;
+    filePaths: string[];
+  }>;
+
   getFileStats: (filePath: string) => Promise<{
     size: number;
     exists: boolean;
+    error?: string;
+  }>;
+
+  // ZIP関連
+  createZip: (
+    filePaths: string[],
+    zipName: string
+  ) => Promise<{
+    success: boolean;
+    zipPath?: string;
+    size?: number;
+    error?: string;
+  }>;
+
+  downloadZip: (
+    zipPath: string,
+    defaultName: string
+  ) => Promise<{
+    success: boolean;
+    filePath?: string;
+    canceled?: boolean;
+    error?: string;
+  }>;
+
+  // 一時フォルダ管理
+  createTempFolder: () => Promise<{
+    success: boolean;
+    path?: string;
+    error?: string;
+  }>;
+
+  cleanupTempFolder: (tempFolder: string) => Promise<{
+    success: boolean;
     error?: string;
   }>;
 

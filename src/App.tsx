@@ -20,6 +20,7 @@ import {
   ConversionSettingsForm,
   ConversionResult as ResultType,
   BatchProgress as BatchProgressType,
+  BatchResultsWithTempFolder,
 } from '@/types';
 
 type AppStage = 'select' | 'settings' | 'converting' | 'result';
@@ -136,17 +137,40 @@ function App() {
     conversionApi.cancelFile(fileId);
   };
 
-  const handleDownloadAll = () => {
+  const handleDownloadZip = async () => {
     const successfulResults = batchResults.filter((r) => r.success);
-    success(
-      `${successfulResults.length}ファイルをまとめてダウンロードしました`
-    );
-  };
 
-  const handleDownloadFile = (index: number) => {
-    const result = batchResults[index];
-    if (result?.success && result.outputFile) {
-      success(`${result.outputFile.name} をダウンロードしました`);
+    if (successfulResults.length === 0) {
+      error('ダウンロード可能なファイルがありません');
+      return;
+    }
+
+    try {
+      // 成功したファイルのパスを収集
+      const filePaths = successfulResults
+        .filter((result) => result.outputFile?.path)
+        .map((result) => result.outputFile!.path);
+
+      if (filePaths.length === 0) {
+        error('ダウンロード可能なファイルパスが見つかりません');
+        return;
+      }
+
+      // 一時フォルダのパスを取得
+      const tempFolder = (batchResults as BatchResultsWithTempFolder)
+        .tempFolder;
+
+      // ZIP作成とダウンロード（conversionApiを使用）
+      await conversionApi.createAndDownloadZip(filePaths, tempFolder);
+
+      success(`${successfulResults.length}ファイルのZIPをダウンロードしました`);
+    } catch (err) {
+      console.error('ZIP ダウンロードエラー:', err);
+      if (err instanceof Error && err.message.includes('キャンセル')) {
+        // キャンセルされた場合は何もしない
+      } else {
+        error('ZIP ダウンロードに失敗しました');
+      }
     }
   };
 
@@ -255,8 +279,7 @@ function App() {
                 <BatchResult
                   results={batchResults}
                   filenames={selectedFiles.map((f) => f.name)}
-                  onDownloadAll={handleDownloadAll}
-                  onDownloadFile={handleDownloadFile}
+                  onDownloadZip={handleDownloadZip}
                   onReset={handleReset}
                 />
               )}

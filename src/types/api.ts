@@ -64,6 +64,11 @@ export interface BatchProgress {
 
 export type BatchProgressCallback = (progress: BatchProgress) => void;
 
+// バッチ結果に一時フォルダ情報を追加した型
+export interface BatchResultsWithTempFolder extends Array<ConversionResult> {
+  tempFolder?: string;
+}
+
 export interface ConversionAPI {
   convert(
     request: ConversionRequest,
@@ -92,4 +97,6 @@ export interface ConversionAPI {
     files: FileInfo[],
     settings: ConversionSettings
   ): Promise<{ totalOriginalSize: number; totalEstimatedSize: number }>;
+
+  createAndDownloadZip(filePaths: string[], tempFolder?: string): Promise<void>;
 }
