@@ -13,7 +13,6 @@ import {
   rmdirSync,
 } from 'fs';
 import { tmpdir } from 'os';
-import archiver from 'archiver';
 
 interface ConversionOptions {
   quality:
@@ -197,13 +196,17 @@ ipcMain.handle('get-file-stats', async (_, filePath: string) => {
 ipcMain.handle(
   'create-zip',
   async (_, filePaths: string[], zipName: string) => {
-    return new Promise((resolve, reject) => {
-      // 一時フォルダにzipファイルを作成
-      const tempZipPath = join(tmpdir(), `${zipName}.zip`);
-      const output = createWriteStream(tempZipPath);
-      const archive = archiver('zip', {
-        zlib: { level: 9 }, // 最高圧縮レベル
-      });
+    return new Promise(async (resolve, reject) => {
+      try {
+        // 動的にarchiverをimport
+        const archiver = (await import('archiver')).default;
+        
+        // 一時フォルダにzipファイルを作成
+        const tempZipPath = join(tmpdir(), `${zipName}.zip`);
+        const output = createWriteStream(tempZipPath);
+        const archive = archiver('zip', {
+          zlib: { level: 9 }, // 最高圧縮レベル
+        });
 
       output.on('close', () => {
         console.log(`ZIP作成完了: ${archive.pointer()} bytes`);
@@ -231,6 +234,9 @@ ipcMain.handle(
       });
 
       archive.finalize();
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 );
@@ -424,7 +430,7 @@ function applyFormatSpecificSettings(
   switch (outputExt) {
     case 'jpg':
     case 'jpeg': {
-      // JPEG最適化
+      // JPEG最適化（JPEGは透明度をサポートしないため、透明部分は白色に変換）
       args.push('-codec:v', 'mjpeg');
       const jpegQuality = getJpegQuality(quality);
       args.push('-q:v', jpegQuality.toString());
@@ -466,6 +472,11 @@ function applyFormatSpecificSettings(
       if (quality !== 'highest') {
         args.push('-preset', 'photo');
         args.push('-method', '6'); // 最高品質の圧縮方法
+      }
+      // 透過部分を維持するため、入力に透明度がある場合はyuva420pを使用
+      if (inputExt === 'png') {
+        args.push('-pix_fmt', 'yuva420p');
+      } else {
         args.push('-pix_fmt', 'yuv420p');
       }
       break;
@@ -477,7 +488,12 @@ function applyFormatSpecificSettings(
       const avifCrf = getAvifCrf(quality);
       args.push('-crf', avifCrf.toString());
       args.push('-cpu-used', '4'); // 速度と品質のバランス
-      args.push('-pix_fmt', 'yuv420p');
+      // 透過部分を維持するため、入力に透明度がある場合はyuva420pを使用
+      if (inputExt === 'png') {
+        args.push('-pix_fmt', 'yuva420p');
+      } else {
+        args.push('-pix_fmt', 'yuv420p');
+      }
       break;
     }
 
@@ -514,11 +530,22 @@ function applyFormatSpecificSettings(
             // 16bit深度を8bitに制限（大幅なサイズ削減）
             args.push('-pix_fmt', 'rgb24');
           }
+        } else if (inputExt === 'webp') {
+          // WebPの場合は透過を維持
+          args.push('-codec:v', 'libwebp');
+          const webpQuality = getWebpQuality(quality);
+          args.push('-q:v', webpQuality.toString());
+          args.push('-pix_fmt', 'yuva420p');
         } else {
           // その他の形式では汎用的な圧縮を適用
           const defaultQuality = getJpegQuality(quality);
           args.push('-q:v', defaultQuality.toString());
-          args.push('-pix_fmt', 'yuv420p');
+          // 透明度をサポートしない形式の場合は背景色を指定
+          if (inputExt === 'png') {
+            args.push('-pix_fmt', 'yuv420p');
+          } else {
+            args.push('-pix_fmt', 'yuv420p');
+          }
         }
       }
       break;
